@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:admin;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true
+server:
+  port: 8090
+logging:
+  level:
+    org.hibernate.SQL: warn
