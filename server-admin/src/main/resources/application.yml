@@ -17,6 +17,4 @@ spring:
       enabled: true
 server:
   port: 8090
-logging:
-  level:
-    org.hibernate.SQL: warn
+# 로깅 설정은 logback-spring.xml에서 관리
