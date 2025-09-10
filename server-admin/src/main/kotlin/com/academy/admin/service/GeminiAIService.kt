@@ -50,7 +50,14 @@ class GeminiAIService(
             - "USD/JPY가 오늘 15:30에 상승할 것인가? (O/X)"
             - "S&P500이 오늘 장 마감에 상승할 것인가? (O/X)"
             
-            간단하고 명확한 문제 하나만 생성해주세요.
+            JSON 형태로 다음 필드들을 반환해주세요:
+            {
+                "prompt": "생성된 문제",
+                "pros": "찬성 근거 (JSON 배열)",
+                "cons": "반대 근거 (JSON 배열)",
+                "importance": "이 문제가 왜 중요한지에 대한 설명 (2-3문장)",
+                "impact": "예상 파급효과에 대한 설명 (2-3문장)"
+            }
         """.trimIndent()
         
         return callGeminiAPI(prompt)
@@ -72,7 +79,14 @@ class GeminiAIService(
             - "Apple이 오늘 장후에 EPS 컨센서스를 상회할 것인가? (O/X)"
             - "Tesla가 오늘 장후에 매출 컨센서스를 상회할 것인가? (O/X)"
             
-            간단하고 명확한 문제 하나만 생성해주세요.
+            JSON 형태로 다음 필드들을 반환해주세요:
+            {
+                "prompt": "생성된 문제",
+                "pros": "찬성 근거 (JSON 배열)",
+                "cons": "반대 근거 (JSON 배열)",
+                "importance": "이 문제가 왜 중요한지에 대한 설명 (2-3문장)",
+                "impact": "예상 파급효과에 대한 설명 (2-3문장)"
+            }
         """.trimIndent()
         
         return callGeminiAPI(prompt)
@@ -90,7 +104,14 @@ class GeminiAIService(
             - "NASDAQ이 오늘 장 마감에 상승할 것인가? (O/X)"
             - "KOSPI가 내일 오전에 상승할 것인가? (O/X)"
             
-            간단하고 명확한 문제 하나만 생성해주세요.
+            JSON 형태로 다음 필드들을 반환해주세요:
+            {
+                "prompt": "생성된 문제",
+                "pros": "찬성 근거 (JSON 배열)",
+                "cons": "반대 근거 (JSON 배열)",
+                "importance": "이 문제가 왜 중요한지에 대한 설명 (2-3문장)",
+                "impact": "예상 파급효과에 대한 설명 (2-3문장)"
+            }
         """.trimIndent()
         
         return callGeminiAPI(prompt)

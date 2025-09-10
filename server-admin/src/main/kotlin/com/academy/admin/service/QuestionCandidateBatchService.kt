@@ -58,23 +58,28 @@ class QuestionCandidateBatchService(
                 logger.info("  - 처리 중인 경제 이벤트: ${event.event} (${event.impact})")
                 if (event.impact == "High" || event.impact == "Medium") {
                     logger.info("    → AI 문제 생성 요청...")
-                    val question = geminiAIService.generateEconomicQuestion(event)
-                    logger.info("    → AI 응답: $question")
-                    if (question != "문제 생성 실패") {
-                        val ticker = extractTickerFromQuestion(question)
+                    val aiResponse = geminiAIService.generateEconomicQuestion(event)
+                    logger.info("    → AI 응답: $aiResponse")
+                    if (aiResponse != "문제 생성 실패") {
+                        val parsedResponse = parseAIResponse(aiResponse)
+                        val prompt = parsedResponse["prompt"] as? String ?: aiResponse
+                        val pros = parsedResponse["pros"] as? String ?: "[]"
+                        val cons = parsedResponse["cons"] as? String ?: "[]"
+                        val importance = parsedResponse["importance"] as? String ?: ""
+                        val impact = parsedResponse["impact"] as? String ?: ""
+                        
+                        val ticker = extractTickerFromQuestion(prompt)
                         logger.info("    → 추출된 티커: $ticker")
-                        logger.info("    → 찬성 근거 생성...")
-                        val pros = bingNewsService.getMockProsReasons(question, ticker)
-                        logger.info("    → 반대 근거 생성...")
-                        val cons = bingNewsService.getMockConsReasons(question, ticker)
                         
                         val candidate = QuestionCandidate(
                             candidate_date = today,
                             type = QuestionType.MACRO,
                             ticker = ticker,
-                            prompt = question,
-                            pros = objectMapper.writeValueAsString(pros),
-                            cons = objectMapper.writeValueAsString(cons),
+                            prompt = prompt,
+                            pros = pros,
+                            cons = cons,
+                            importance = importance,
+                            impact = impact,
                             status = CandidateStatus.CANDIDATE
                         )
                         candidates.add(candidate)
@@ -92,23 +97,28 @@ class QuestionCandidateBatchService(
             earningsEvents.take(2).forEach { event ->
                 logger.info("  - 처리 중인 실적 이벤트: ${event.symbol} (${event.company})")
                 logger.info("    → AI 문제 생성 요청...")
-                val question = geminiAIService.generateEarningsQuestion(event)
-                logger.info("    → AI 응답: $question")
-                if (question != "문제 생성 실패") {
+                val aiResponse = geminiAIService.generateEarningsQuestion(event)
+                logger.info("    → AI 응답: $aiResponse")
+                if (aiResponse != "문제 생성 실패") {
+                    val parsedResponse = parseAIResponse(aiResponse)
+                    val prompt = parsedResponse["prompt"] as? String ?: aiResponse
+                    val pros = parsedResponse["pros"] as? String ?: "[]"
+                    val cons = parsedResponse["cons"] as? String ?: "[]"
+                    val importance = parsedResponse["importance"] as? String ?: ""
+                    val impact = parsedResponse["impact"] as? String ?: ""
+                    
                     val ticker = event.symbol
                     logger.info("    → 티커: $ticker")
-                    logger.info("    → 찬성 근거 생성...")
-                    val pros = bingNewsService.getMockProsReasons(question, ticker)
-                    logger.info("    → 반대 근거 생성...")
-                    val cons = bingNewsService.getMockConsReasons(question, ticker)
                     
                     val candidate = QuestionCandidate(
                         candidate_date = today,
                         type = QuestionType.EARNINGS,
                         ticker = ticker,
-                        prompt = question,
-                        pros = objectMapper.writeValueAsString(pros),
-                        cons = objectMapper.writeValueAsString(cons),
+                        prompt = prompt,
+                        pros = pros,
+                        cons = cons,
+                        importance = importance,
+                        impact = impact,
                         status = CandidateStatus.CANDIDATE
                     )
                     candidates.add(candidate)
@@ -121,21 +131,25 @@ class QuestionCandidateBatchService(
             // 5. 일반 시황 문제 생성 (1개)
             logger.info("5. 일반 시황 문제 생성 시작...")
             logger.info("    → AI 시황 문제 생성 요청...")
-            val marketQuestion = geminiAIService.generateMarketQuestion()
-            logger.info("    → AI 응답: $marketQuestion")
-            if (marketQuestion != "문제 생성 실패") {
-                logger.info("    → 찬성 근거 생성...")
-                val pros = bingNewsService.getMockProsReasons(marketQuestion)
-                logger.info("    → 반대 근거 생성...")
-                val cons = bingNewsService.getMockConsReasons(marketQuestion)
+            val aiResponse = geminiAIService.generateMarketQuestion()
+            logger.info("    → AI 응답: $aiResponse")
+            if (aiResponse != "문제 생성 실패") {
+                val parsedResponse = parseAIResponse(aiResponse)
+                val prompt = parsedResponse["prompt"] as? String ?: aiResponse
+                val pros = parsedResponse["pros"] as? String ?: "[]"
+                val cons = parsedResponse["cons"] as? String ?: "[]"
+                val importance = parsedResponse["importance"] as? String ?: ""
+                val impact = parsedResponse["impact"] as? String ?: ""
                 
                 val candidate = QuestionCandidate(
                     candidate_date = today,
                     type = QuestionType.INDEX,
                     ticker = null,
-                    prompt = marketQuestion,
-                    pros = objectMapper.writeValueAsString(pros),
-                    cons = objectMapper.writeValueAsString(cons),
+                    prompt = prompt,
+                    pros = pros,
+                    cons = cons,
+                    importance = importance,
+                    impact = impact,
                     status = CandidateStatus.CANDIDATE
                 )
                 candidates.add(candidate)
@@ -159,6 +173,36 @@ class QuestionCandidateBatchService(
             
         } catch (e: Exception) {
             logger.error("문제 후보 생성 배치 실패: ${e.message}", e)
+        }
+    }
+    
+    private fun parseAIResponse(aiResponse: String): Map<String, Any> {
+        return try {
+            // JSON 블록을 찾아서 추출
+            val jsonPattern = """```json\s*(\{.*?\})\s*```""".toRegex(RegexOption.DOT_MATCHES_ALL)
+            val jsonMatch = jsonPattern.find(aiResponse)
+            
+            val jsonString = if (jsonMatch != null) {
+                jsonMatch.groupValues[1]
+            } else {
+                // JSON 블록이 없으면 전체 응답을 JSON으로 파싱 시도
+                aiResponse
+            }
+            
+            val responseMap = objectMapper.readValue(jsonString, Map::class.java) as Map<String, Any>
+            responseMap
+        } catch (e: Exception) {
+            logger.warn("AI 응답 파싱 실패: ${e.message}")
+            logger.warn("AI 응답 내용: $aiResponse")
+            
+            // 파싱 실패 시 기본값 반환
+            mapOf(
+                "prompt" to "AI 응답 파싱 실패",
+                "pros" to "[]",
+                "cons" to "[]",
+                "importance" to "AI 응답 파싱 실패",
+                "impact" to "AI 응답 파싱 실패"
+            )
         }
     }
     

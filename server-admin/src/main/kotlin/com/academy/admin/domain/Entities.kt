@@ -26,9 +26,11 @@ data class QuestionCandidate(
     val candidate_date: LocalDate,
     @Enumerated(EnumType.STRING) val type: QuestionType = QuestionType.INDEX,
     val ticker: String? = null,
-    @Column(length=500) val prompt: String,
+    @Column(length=1000) val prompt: String,
     @Lob val pros: String? = null, // JSON
     @Lob val cons: String? = null, // JSON
+    @Column(length=2000) val importance: String? = null, // 문제의 중요성 설명
+    @Column(length=2000) val impact: String? = null, // 예상 파급효과 설명
     @Enumerated(EnumType.STRING) val status: CandidateStatus = CandidateStatus.CANDIDATE,
     val created_at: LocalDateTime = LocalDateTime.now()
 )
@@ -38,9 +40,11 @@ data class Question(
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) val id: Long? = null,
     val season_id: Long,
     val ticker: String? = null,
-    @Column(length=500) val prompt: String,
+    @Column(length=1000) val prompt: String,
     @Lob val pros: String? = null, // JSON
     @Lob val cons: String? = null, // JSON
+    @Column(length=2000) val importance: String? = null, // 문제의 중요성 설명
+    @Column(length=2000) val impact: String? = null, // 예상 파급효과 설명
     val closes_at: LocalDateTime,
     @Enumerated(EnumType.STRING) val status: QuestionStatus = QuestionStatus.DRAFT
 )

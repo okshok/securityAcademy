@@ -27,9 +27,11 @@ CREATE TABLE question_candidates (
     candidate_date DATE NOT NULL,
     type VARCHAR(50) NOT NULL,
     ticker VARCHAR(20),
-    prompt VARCHAR(500) NOT NULL,
+    prompt VARCHAR(1000) NOT NULL,
     pros CLOB,
     cons CLOB,
+    importance VARCHAR(2000),
+    impact VARCHAR(2000),
     status VARCHAR(50) DEFAULT 'CANDIDATE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -38,9 +40,11 @@ CREATE TABLE questions (
     id BIGSERIAL PRIMARY KEY,
     season_id BIGINT NOT NULL,
     ticker VARCHAR(20),
-    prompt VARCHAR(500) NOT NULL,
+    prompt VARCHAR(1000) NOT NULL,
     pros CLOB,
     cons CLOB,
+    importance VARCHAR(2000),
+    impact VARCHAR(2000),
     closes_at TIMESTAMP NOT NULL,
     status VARCHAR(50) NOT NULL
 );

@@ -155,12 +155,7 @@ export default function AdminQuestion() {
             {drafts.map(d => (
               <div 
                 key={d.id} 
-                className={`p-4 rounded-lg cursor-pointer transition-all duration-200 border ${
-                  selectedItem?.id === d.id 
-                    ? 'bg-blue-600 text-white border-blue-500 shadow-lg' 
-                    : 'bg-neutral-800 hover:bg-neutral-700 border-neutral-600 hover:border-neutral-500'
-                }`}
-                onClick={() => selectItem(d)}
+                className="p-4 rounded-lg border border-neutral-600 bg-neutral-800"
               >
                 {/* 헤더 정보 */}
                 <div className="flex items-center justify-between mb-3">
@@ -200,6 +195,26 @@ export default function AdminQuestion() {
                 <div className="mb-3">
                   <h3 className="font-semibold text-sm mb-1">문제</h3>
                   <p className="text-sm leading-relaxed">{d.prompt}</p>
+                </div>
+
+                {/* 중요성과 파급효과 */}
+                <div className="grid grid-cols-1 gap-3 mb-3">
+                  {d.importance && (
+                    <div className="p-2 bg-yellow-900/20 rounded border border-yellow-500/30">
+                      <h4 className="font-medium text-xs text-yellow-400 mb-1 flex items-center gap-1">
+                        <span>💡</span> 중요성
+                      </h4>
+                      <p className="text-xs text-yellow-100 leading-relaxed">{d.importance}</p>
+                    </div>
+                  )}
+                  {d.impact && (
+                    <div className="p-2 bg-orange-900/20 rounded border border-orange-500/30">
+                      <h4 className="font-medium text-xs text-orange-400 mb-1 flex items-center gap-1">
+                        <span>⚡</span> 파급효과
+                      </h4>
+                      <p className="text-xs text-orange-100 leading-relaxed">{d.impact}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* 찬반 근거 */}
@@ -284,12 +299,43 @@ export default function AdminQuestion() {
                       </span>
                     )}
                   </div>
+                  {q.status === 'DRAFT' && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        confirmQuestion(q.id)
+                      }}
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
+                    >
+                      확정
+                    </button>
+                  )}
                 </div>
 
                 {/* 문제 내용 */}
                 <div className="mb-3">
                   <h3 className="font-semibold text-sm mb-1">문제</h3>
                   <p className="text-sm leading-relaxed">{q.prompt}</p>
+                </div>
+
+                {/* 중요성과 파급효과 */}
+                <div className="grid grid-cols-1 gap-2 mb-3">
+                  {q.importance && (
+                    <div className="p-2 bg-yellow-900/20 rounded border border-yellow-500/30">
+                      <h4 className="font-medium text-xs text-yellow-400 mb-1 flex items-center gap-1">
+                        <span>💡</span> 중요성
+                      </h4>
+                      <p className="text-xs text-yellow-100 leading-relaxed">{q.importance}</p>
+                    </div>
+                  )}
+                  {q.impact && (
+                    <div className="p-2 bg-orange-900/20 rounded border border-orange-500/30">
+                      <h4 className="font-medium text-xs text-orange-400 mb-1 flex items-center gap-1">
+                        <span>⚡</span> 파급효과
+                      </h4>
+                      <p className="text-xs text-orange-100 leading-relaxed">{q.impact}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* 상태 정보 */}
@@ -309,14 +355,50 @@ export default function AdminQuestion() {
           <h3 className="text-lg font-semibold mb-4">문제 상세 관리</h3>
           
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">문제 내용</label>
-              <textarea 
-                className="w-full p-2 bg-neutral-700 rounded"
-                rows={3}
-                value={selectedItem.prompt}
-                onChange={(e) => setSelectedItem({ ...selectedItem, prompt: e.target.value })}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">문제 내용</label>
+                <textarea 
+                  className="w-full p-3 bg-neutral-700 rounded border border-neutral-600 focus:border-blue-500 focus:outline-none"
+                  rows={3}
+                  value={selectedItem.prompt || ''}
+                  onChange={(e) => setSelectedItem({ ...selectedItem, prompt: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">티커</label>
+                <input 
+                  type="text"
+                  className="w-full p-3 bg-neutral-700 rounded border border-neutral-600 focus:border-blue-500 focus:outline-none"
+                  value={selectedItem.ticker || ''}
+                  onChange={(e) => setSelectedItem({ ...selectedItem, ticker: e.target.value })}
+                  placeholder="예: AAPL, TSLA, NVDA"
+                />
+              </div>
+            </div>
+
+            {/* 중요성과 파급효과 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">문제의 중요성</label>
+                <textarea 
+                  className="w-full p-3 bg-neutral-700 rounded border border-neutral-600 focus:border-yellow-500 focus:outline-none"
+                  rows={3}
+                  value={selectedItem.importance || ''}
+                  onChange={(e) => setSelectedItem({ ...selectedItem, importance: e.target.value })}
+                  placeholder="이 문제가 왜 중요한지 설명..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">예상 파급효과</label>
+                <textarea 
+                  className="w-full p-3 bg-neutral-700 rounded border border-neutral-600 focus:border-orange-500 focus:outline-none"
+                  rows={3}
+                  value={selectedItem.impact || ''}
+                  onChange={(e) => setSelectedItem({ ...selectedItem, impact: e.target.value })}
+                  placeholder="예상되는 파급효과 설명..."
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -349,8 +431,11 @@ export default function AdminQuestion() {
                     try {
                       const pros = typeof selectedItem.pros === 'string' ? JSON.parse(selectedItem.pros) : selectedItem.pros
                       return Array.isArray(pros) ? pros.map((pro, index) => (
-                        <div key={index} className="text-sm mb-1">• {pro}</div>
-                      )) : <div className="text-sm">{selectedItem.pros}</div>
+                        <div key={index} className="text-sm mb-2 flex items-start gap-2">
+                          <span className="text-green-400 mt-0.5">•</span>
+                          <span>{pro.text}</span>
+                        </div>
+                      )) : <div className="text-sm text-gray-400">근거 없음</div>
                     } catch {
                       return <div className="text-sm">{selectedItem.pros}</div>
                     }
@@ -364,8 +449,11 @@ export default function AdminQuestion() {
                     try {
                       const cons = typeof selectedItem.cons === 'string' ? JSON.parse(selectedItem.cons) : selectedItem.cons
                       return Array.isArray(cons) ? cons.map((con, index) => (
-                        <div key={index} className="text-sm mb-1">• {con}</div>
-                      )) : <div className="text-sm">{selectedItem.cons}</div>
+                        <div key={index} className="text-sm mb-2 flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span>{con.text}</span>
+                        </div>
+                      )) : <div className="text-sm text-gray-400">근거 없음</div>
                     } catch {
                       return <div className="text-sm">{selectedItem.cons}</div>
                     }
@@ -379,7 +467,10 @@ export default function AdminQuestion() {
                 onClick={() => updateQuestion(selectedItem.id, {
                   prompt: selectedItem.prompt,
                   pros: selectedItem.pros,
-                  cons: selectedItem.cons
+                  cons: selectedItem.cons,
+                  ticker: selectedItem.ticker,
+                  importance: selectedItem.importance,
+                  impact: selectedItem.impact
                 })}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
               >
