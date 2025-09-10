@@ -61,7 +61,8 @@ CREATE TABLE resolutions (
     question_id BIGINT PRIMARY KEY,
     outcome VARCHAR(10) NOT NULL,
     resolved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    proof_url VARCHAR(500)
+    proof_url VARCHAR(500),
+    explanation VARCHAR(2000)
 );
 
 CREATE TABLE scores (

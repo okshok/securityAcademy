@@ -63,7 +63,8 @@ data class Resolution(
     @Id val question_id: Long,
     @Enumerated(EnumType.STRING) val outcome: Outcome,
     val resolved_at: LocalDateTime = LocalDateTime.now(),
-    val proof_url: String? = null
+    val proof_url: String? = null,
+    @Column(length=2000) val explanation: String? = null
 )
 
 @Entity @Table(name="scores")

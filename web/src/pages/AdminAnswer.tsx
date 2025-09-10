@@ -15,17 +15,35 @@ export default function AdminAnswer() {
 
   const loadQuestions = async () => {
     try {
-      const response = await api.get('/answers/questions')
+      const response = await api.get('/admin/answers/questions')
       setQuestions(response.data)
     } catch (error) {
       console.error('문제 목록 로드 실패:', error)
     }
   }
 
+  const generateAnswer = async (questionId: number) => {
+    try {
+      setLoading(true)
+      const response = await api.post(`/admin/answers/questions/${questionId}/generate-answer`)
+      if (response.data.success) {
+        alert('정답지가 자동 생성되었습니다')
+        selectQuestion(questionId)
+      } else {
+        alert('정답지 생성에 실패했습니다: ' + response.data.message)
+      }
+    } catch (error) {
+      console.error('정답지 생성 실패:', error)
+      alert('정답지 생성에 실패했습니다')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const selectQuestion = async (questionId: number) => {
     try {
       setLoading(true)
-      const response = await api.get(`/answers/questions/${questionId}`)
+      const response = await api.get(`/admin/answers/questions/${questionId}`)
       setSelectedQuestion(response.data.question)
       setAnswer(response.data.resolution)
     } catch (error) {
@@ -39,7 +57,7 @@ export default function AdminAnswer() {
     if (!selectedQuestion) return
     
     try {
-      await api.post(`/answers/questions/${selectedQuestion.id}`, {
+      await api.post(`/admin/answers/questions/${selectedQuestion.id}`, {
         outcome: outcome,
         proofUrl: '',
         explanation: ''
@@ -57,7 +75,7 @@ export default function AdminAnswer() {
     if (!selectedQuestion) return
     
     try {
-      await api.patch(`/answers/questions/${selectedQuestion.id}`, {
+      await api.patch(`/admin/answers/questions/${selectedQuestion.id}`, {
         outcome: outcome,
         proofUrl: proofUrl
       })
@@ -73,7 +91,7 @@ export default function AdminAnswer() {
     if (!selectedQuestion || !explanationInstruction) return
     
     try {
-      const response = await api.post(`/answers/questions/${selectedQuestion.id}/ai-explanation`, {
+      const response = await api.post(`/admin/answers/questions/${selectedQuestion.id}/ai-explanation`, {
         instruction: explanationInstruction
       })
       setAiExplanation(response.data.explanation)
@@ -90,7 +108,15 @@ export default function AdminAnswer() {
       {/* 문제 목록 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
-          <h2 className="text-lg font-semibold mb-4">정답이 필요한 문제 목록</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">정답이 필요한 문제 목록</h2>
+            <button
+              onClick={() => loadQuestions()}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+            >
+              새로고침
+            </button>
+          </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {questions.map(question => (
               <div 
@@ -106,6 +132,11 @@ export default function AdminAnswer() {
                 <div className="text-sm opacity-80">
                   상태: {question.status} | 마감: {new Date(question.closes_at).toLocaleString()}
                 </div>
+                {question.ticker && (
+                  <div className="text-xs opacity-60 mt-1">
+                    티커: {question.ticker}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -120,15 +151,61 @@ export default function AdminAnswer() {
               <div className="p-4 bg-neutral-800 rounded-lg">
                 <h3 className="font-medium mb-2">문제: {selectedQuestion.prompt}</h3>
                 <p className="text-sm text-gray-400">마감: {new Date(selectedQuestion.closes_at).toLocaleString()}</p>
+                {selectedQuestion.ticker && (
+                  <p className="text-sm text-gray-400">티커: {selectedQuestion.ticker}</p>
+                )}
+              </div>
+
+              {/* 정답지 자동 생성 버튼 */}
+              <div className="p-4 bg-purple-900/20 rounded-lg border border-purple-500/30">
+                <h4 className="font-medium mb-2 text-purple-300">🤖 AI 정답지 자동 생성</h4>
+                <p className="text-sm text-gray-300 mb-3">
+                  Investing.com 데이터와 뉴스 정보를 바탕으로 AI가 정답과 해설을 자동 생성합니다.
+                </p>
+                <button
+                  onClick={() => generateAnswer(selectedQuestion.id)}
+                  disabled={loading}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 rounded font-medium transition-colors"
+                >
+                  {loading ? '생성 중...' : '정답지 자동 생성'}
+                </button>
               </div>
 
               {answer ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-green-900/20 rounded-lg">
-                    <h4 className="font-medium mb-2">현재 정답</h4>
-                    <p>결과: {answer.outcome}</p>
-                    <p>증명 URL: {answer.proof_url || '없음'}</p>
-                    <p>생성일: {new Date(answer.resolved_at).toLocaleString()}</p>
+                  <div className="p-4 bg-green-900/20 rounded-lg border border-green-500/30">
+                    <h4 className="font-medium mb-3 text-green-300">✅ 현재 정답</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">결과:</span>
+                        <span className={`px-2 py-1 rounded text-sm font-medium ${
+                          answer.outcome === 'O' ? 'bg-green-600 text-white' :
+                          answer.outcome === 'X' ? 'bg-red-600 text-white' :
+                          'bg-gray-600 text-white'
+                        }`}>
+                          {answer.outcome === 'O' ? 'O (상승/긍정)' :
+                           answer.outcome === 'X' ? 'X (하락/부정)' : 'VOID (무효)'}
+                        </span>
+                      </div>
+                      {answer.explanation && (
+                        <div>
+                          <span className="font-medium">해설:</span>
+                          <p className="text-sm text-gray-300 mt-1 leading-relaxed">{answer.explanation}</p>
+                        </div>
+                      )}
+                      {answer.proof_url && (
+                        <div>
+                          <span className="font-medium">증명 URL:</span>
+                          <a href={answer.proof_url} target="_blank" rel="noopener noreferrer" 
+                             className="text-blue-400 hover:text-blue-300 ml-2 text-sm">
+                            {answer.proof_url}
+                          </a>
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-400">
+                        생성일: {new Date(answer.resolved_at).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

@@ -104,7 +104,7 @@ class BingNewsService(
         return keywords
     }
     
-    private fun searchNews(query: String): List<NewsItem> {
+    fun searchNews(query: String): List<NewsItem> {
         return try {
             val response = webClient.build()
                 .get()
